@@ -161,7 +161,7 @@ class RecipeDetailPage extends StatelessWidget {
   }
 
   Widget _buildInfoRow(RecipeEntity recipe) {
-    return Row(
+    return Column(
       children: [
         if (recipe.prepTime != null) ...[
           _buildInfoItem(Icons.schedule, recipe.prepTime!),

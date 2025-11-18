@@ -26,12 +26,12 @@ class _SearchFilterBarState extends State<SearchFilterBar> {
 
   void _applyFilters() {
     context.read<RecipesBloc>().add(
-          FilterRecipes(
-            searchQuery: _searchController.text,
-            hasImage: _hasImage,
-            maxPrepTime: _maxPrepTime,
-          ),
-        );
+      FilterRecipes(
+        searchQuery: _searchController.text,
+        hasImage: _hasImage,
+        maxPrepTime: _maxPrepTime,
+      ),
+    );
   }
 
   void _showFilterDialog() {
@@ -47,37 +47,34 @@ class _SearchFilterBarState extends State<SearchFilterBar> {
                 children: [
                   // Фильтр по изображению
                   const Text('Изображение:'),
-                  Row(
+                  SizedBox(height: 8),
+                  Column(
                     children: [
-                      Expanded(
-                        child: RadioListTile<bool?>(
-                          title: const Text('Все'),
-                          value: null,
-                          groupValue: _hasImage,
-                          onChanged: (value) {
-                            setState(() => _hasImage = value);
-                          },
-                        ),
+                      RadioListTile<bool?>(
+                        title: const Text('Все'),
+                        value: null,
+                        groupValue: _hasImage,
+                        onChanged: (value) {
+                          setState(() => _hasImage = value);
+                        },
                       ),
-                      Expanded(
-                        child: RadioListTile<bool?>(
-                          title: const Text('С фото'),
-                          value: true,
-                          groupValue: _hasImage,
-                          onChanged: (value) {
-                            setState(() => _hasImage = value);
-                          },
-                        ),
+
+                      RadioListTile<bool?>(
+                        title: const Text('С фото'),
+                        value: true,
+                        groupValue: _hasImage,
+                        onChanged: (value) {
+                          setState(() => _hasImage = value);
+                        },
                       ),
-                      Expanded(
-                        child: RadioListTile<bool?>(
-                          title: const Text('Без фото'),
-                          value: false,
-                          groupValue: _hasImage,
-                          onChanged: (value) {
-                            setState(() => _hasImage = value);
-                          },
-                        ),
+
+                      RadioListTile<bool?>(
+                        title: const Text('Без фото'),
+                        value: false,
+                        groupValue: _hasImage,
+                        onChanged: (value) {
+                          setState(() => _hasImage = value);
+                        },
                       ),
                     ],
                   ),
@@ -89,14 +86,20 @@ class _SearchFilterBarState extends State<SearchFilterBar> {
                     min: 0,
                     max: 120,
                     divisions: 12,
-                    label: _maxPrepTime == null ? 'Любое' : '${_maxPrepTime} мин',
+                    label: _maxPrepTime == null
+                        ? 'Любое'
+                        : '${_maxPrepTime} мин',
                     onChanged: (value) {
                       setState(() {
                         _maxPrepTime = value == 0 ? null : value.toInt();
                       });
                     },
                   ),
-                  Text(_maxPrepTime == null ? 'Любое время' : 'До $_maxPrepTime минут'),
+                  Text(
+                    _maxPrepTime == null
+                        ? 'Любое время'
+                        : 'До $_maxPrepTime минут',
+                  ),
                 ],
               ),
               actions: [

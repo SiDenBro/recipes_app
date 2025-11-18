@@ -58,7 +58,7 @@ class RecipeRemoteDataSourceImpl implements RecipeRemoteDataSource {
             return RecipeModel.fromJson(item);
           } catch (e) {
             // Логируем ошибку парсинга отдельного элемента, но продолжаем обработку остальных
-            print('Error parsing recipe: $e');
+            //print('Error parsing recipe: $e');
             return RecipeModel(id: 'error', title: 'Error parsing recipe');
           }
         }).where((recipe) => recipe.id != 'error').toList();

@@ -58,13 +58,13 @@ class RecipeCard extends StatelessWidget {
                   if (recipe.prepTime != null)
                     Row(
                       children: [
-                        Icon(Icons.schedule, size: 16, color: Colors.grey),
+                        Icon(Icons.schedule, size: 16, color: Theme.of(context).textTheme.bodySmall?.color),
                         const SizedBox(width: 4),
                         Text(
                           recipe.prepTime!,
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 14,
-                            color: Colors.grey,
+                            color: Theme.of(context).textTheme.bodySmall?.color,
                           ),
                         ),
                       ],
@@ -91,16 +91,16 @@ class RecipeCard extends StatelessWidget {
         height: 150,
         width: double.infinity,
         decoration: BoxDecoration(
-          color: Colors.grey[300],
+          color: Theme.of(context).cardTheme.color?.withOpacity(0.1) ?? Colors.grey[300],
           borderRadius: const BorderRadius.only(
             topLeft: Radius.circular(12),
             topRight: Radius.circular(12),
           ),
         ),
-        child: const Icon(
+        child: Icon(
           Icons.fastfood,
           size: 64,
-          color: Colors.grey,
+          color: Theme.of(context).iconTheme.color?.withOpacity(0.3) ?? Colors.grey,
         ),
       );
     }
@@ -116,16 +116,16 @@ class RecipeCard extends StatelessWidget {
         width: double.infinity,
         fit: BoxFit.cover,
         placeholder: (context, url) => Container(
-          color: Colors.grey[300],
-          child: const Center(child: CircularProgressIndicator()),
+          color: Theme.of(context).cardTheme.color?.withOpacity(0.1) ?? Colors.grey[300],
+          child: Center(child: CircularProgressIndicator()),
         ),
         errorWidget: (context, url, error) => Container(
           height: 150,
-          color: Colors.grey[300],
-          child: const Icon(
+          color: Theme.of(context).cardTheme.color?.withOpacity(0.1) ?? Colors.grey[300],
+          child: Icon(
             Icons.broken_image,
             size: 64,
-            color: Colors.grey,
+            color: Theme.of(context).iconTheme.color?.withOpacity(0.3) ?? Colors.grey,
           ),
         ),
       ),

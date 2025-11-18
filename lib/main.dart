@@ -10,6 +10,7 @@ import 'package:recipes_app/domain/use_cases/filter_recipes_use_case.dart';
 import 'package:recipes_app/domain/use_cases/get_cached_recipes_use_case.dart';
 import 'package:recipes_app/domain/use_cases/get_recipes_use_case.dart';
 import 'package:recipes_app/presentation/bloc/recipes/recipes_bloc.dart';
+import 'package:recipes_app/presentation/bloc/theme/theme_bloc.dart';
 import 'package:recipes_app/presentation/router/app_router.dart';
 
 void main() async {
@@ -29,35 +30,15 @@ void main() async {
   runApp(MyApp(dio: dio));
 }
 
-class MyApp extends StatefulWidget {
+class MyApp extends StatelessWidget {
   final Dio dio;
 
   const MyApp({super.key, required this.dio});
 
   @override
-  State<MyApp> createState() => _MyAppState();
-}
-
-class _MyAppState extends State<MyApp> {
-  bool _isDarkTheme = false;
-
-  @override
-  void initState() {
-    super.initState();
-    _loadTheme();
-  }
-
-  void _loadTheme() async {
-    final isDark = await AppTheme.getSavedTheme();
-    setState(() {
-      _isDarkTheme = isDark;
-    });
-  }
-
-  @override
   Widget build(BuildContext context) {
     // Создаем зависимости
-    final remoteDataSource = RecipeRemoteDataSourceImpl(dio: widget.dio);
+    final remoteDataSource = RecipeRemoteDataSourceImpl(dio: dio);
     final localDataSource = RecipeLocalDataSourceImpl();
     final repository = RecipeRepositoryImpl(
       remoteDataSource: remoteDataSource,
@@ -72,20 +53,29 @@ class _MyAppState extends State<MyApp> {
 
     return MultiBlocProvider(
       providers: [
+        BlocProvider<ThemeBloc>(
+          create: (context) => ThemeBloc()..add(LoadTheme()),
+        ),
         BlocProvider<RecipesBloc>(
           create: (context) => RecipesBloc(
             getRecipesUseCase: getRecipesUseCase,
             getCachedRecipesUseCase: getCachedRecipesUseCase,
             cacheRecipesUseCase: cacheRecipesUseCase,
             filterRecipesUseCase: filterRecipesUseCase,
-          ),
+          )..add(LoadRecipes()),
         ),
       ],
-      child: MaterialApp.router(
-        title: 'Recipes App',
-        theme: _isDarkTheme ? AppTheme.darkTheme : AppTheme.lightTheme,
-        routerConfig: AppRouter.router,
-        debugShowCheckedModeBanner: false,
+      child: BlocBuilder<ThemeBloc, ThemeState>(
+        builder: (context, themeState) {
+          final isDarkTheme = themeState is ThemeLoaded ? themeState.isDarkTheme : false;
+          
+          return MaterialApp.router(
+            title: 'Recipes App',
+            theme: isDarkTheme ? AppTheme.darkTheme : AppTheme.lightTheme,
+            routerConfig: AppRouter.router,
+            debugShowCheckedModeBanner: false,
+          );
+        },
       ),
     );
   }

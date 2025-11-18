@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:pull_to_refresh/pull_to_refresh.dart';
-import 'package:recipes_app/core/themes/app_theme.dart';
 import 'package:recipes_app/core/widgets/error_widget.dart';
 import 'package:recipes_app/core/widgets/recipe_card.dart';
 import 'package:recipes_app/core/widgets/search_filter_bar.dart';
 import 'package:recipes_app/presentation/bloc/recipes/recipes_bloc.dart';
+import 'package:recipes_app/presentation/bloc/theme/theme_bloc.dart';
 
 class RecipesListPage extends StatefulWidget {
   const RecipesListPage({super.key});
@@ -17,21 +17,13 @@ class RecipesListPage extends StatefulWidget {
 class _RecipesListPageState extends State<RecipesListPage> {
   final RefreshController _refreshController = RefreshController();
   final ScrollController _scrollController = ScrollController();
-  bool _isDarkTheme = false;
 
   @override
   void initState() {
     super.initState();
-    _loadTheme();
     _scrollController.addListener(_onScroll);
+    // Загружаем рецепты при инициализации
     context.read<RecipesBloc>().add(LoadRecipes());
-  }
-
-  void _loadTheme() async {
-    final isDark = await AppTheme.getSavedTheme();
-    setState(() {
-      _isDarkTheme = isDark;
-    });
   }
 
   void _onScroll() {
@@ -41,11 +33,8 @@ class _RecipesListPageState extends State<RecipesListPage> {
     }
   }
 
-  void _toggleTheme() async {
-    setState(() {
-      _isDarkTheme = !_isDarkTheme;
-    });
-    await AppTheme.saveTheme(_isDarkTheme);
+  void _toggleTheme() {
+    context.read<ThemeBloc>().add(ToggleTheme());
   }
 
   @override
@@ -54,33 +43,36 @@ class _RecipesListPageState extends State<RecipesListPage> {
       appBar: AppBar(
         title: const Text('Рецепты'),
         actions: [
-          IconButton(
-            icon: Icon(_isDarkTheme ? Icons.light_mode : Icons.dark_mode),
-            onPressed: _toggleTheme,
+          BlocBuilder<ThemeBloc, ThemeState>(
+            builder: (context, themeState) {
+              final isDarkTheme = themeState is ThemeLoaded ? themeState.isDarkTheme : false;
+              return IconButton(
+                icon: Icon(isDarkTheme ? Icons.light_mode : Icons.dark_mode),
+                onPressed: _toggleTheme,
+                tooltip: isDarkTheme ? 'Светлая тема' : 'Тёмная тема',
+              );
+            },
           ),
         ],
       ),
-      body: Theme(
-        data: _isDarkTheme ? AppTheme.darkTheme : AppTheme.lightTheme,
-        child: BlocConsumer<RecipesBloc, RecipesState>(
-          listener: (context, state) {
-            if (state is RecipesError) {
-              _refreshController.refreshFailed();
-            } else if (state is RecipesLoaded) {
-              _refreshController.refreshCompleted();
-            }
-          },
-          builder: (context, state) {
-            return Column(
-              children: [
-                const SearchFilterBar(),
-                Expanded(
-                  child: _buildBody(state),
-                ),
-              ],
-            );
-          },
-        ),
+      body: BlocConsumer<RecipesBloc, RecipesState>(
+        listener: (context, state) {
+          if (state is RecipesError) {
+            _refreshController.refreshFailed();
+          } else if (state is RecipesLoaded) {
+            _refreshController.refreshCompleted();
+          }
+        },
+        builder: (context, state) {
+          return Column(
+            children: [
+              const SearchFilterBar(),
+              Expanded(
+                child: _buildBody(state),
+              ),
+            ],
+          );
+        },
       ),
     );
   }
@@ -113,7 +105,7 @@ class _RecipesListPageState extends State<RecipesListPage> {
                 children: [
                   Container(
                     width: 120,
-                    color: Colors.grey[300],
+                    color: Theme.of(context).colorScheme.surfaceVariant,
                   ),
                   Expanded(
                     child: Container(
@@ -124,25 +116,25 @@ class _RecipesListPageState extends State<RecipesListPage> {
                           Container(
                             height: 20,
                             width: 150,
-                            color: Colors.grey[300],
+                            color: Theme.of(context).colorScheme.surfaceVariant,
                           ),
                           const SizedBox(height: 8),
                           Container(
                             height: 16,
                             width: 100,
-                            color: Colors.grey[300],
+                            color: Theme.of(context).colorScheme.surfaceVariant,
                           ),
                           const SizedBox(height: 16),
                           Container(
                             height: 14,
                             width: double.infinity,
-                            color: Colors.grey[200],
+                            color: Theme.of(context).colorScheme.onSurface.withOpacity(0.1),
                           ),
                           const SizedBox(height: 4),
                           Container(
                             height: 14,
                             width: 200,
-                            color: Colors.grey[200],
+                            color: Theme.of(context).colorScheme.onSurface.withOpacity(0.1),
                           ),
                         ],
                       ),
@@ -159,15 +151,21 @@ class _RecipesListPageState extends State<RecipesListPage> {
 
   Widget _buildRecipesList(RecipesLoaded state) {
     if (state.recipes.isEmpty) {
-      return const Center(
+      return Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.search_off, size: 64, color: Colors.grey),
-            SizedBox(height: 16),
+            Icon(
+              Icons.search_off, 
+              size: 64, 
+              color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5),
+            ),
+            const SizedBox(height: 16),
             Text(
               'Рецепты не найдены',
-              style: TextStyle(fontSize: 18, color: Colors.grey),
+              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5),
+              ),
             ),
           ],
         ),

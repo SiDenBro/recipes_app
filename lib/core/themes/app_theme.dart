@@ -1,45 +1,64 @@
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 class AppTheme {
-  static const String _themeKey = 'isDarkTheme';
-
-  static ThemeData lightTheme = ThemeData(
-    primarySwatch: Colors.orange,
-    brightness: Brightness.light,
-    scaffoldBackgroundColor: Colors.grey[50],
-    appBarTheme: AppBarTheme(
-      backgroundColor: Colors.orange,
-      foregroundColor: Colors.white,
-      elevation: 0,
-    ),
-    /*cardTheme: CardTheme(
-      elevation: 2,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-    ),*/
-  );
-
-  static ThemeData darkTheme = ThemeData(
-    primarySwatch: Colors.orange,
-    brightness: Brightness.dark,
-    scaffoldBackgroundColor: Colors.grey[900],
-    appBarTheme: AppBarTheme(
-      backgroundColor: Colors.grey[800],
-      elevation: 0,
-    ),
-    /*cardTheme: CardTheme(
-      elevation: 4,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-    ),*/
-  );
-
-  static Future<bool> getSavedTheme() async {
-    final prefs = await SharedPreferences.getInstance();
-    return prefs.getBool(_themeKey) ?? false;
+  static ThemeData get lightTheme {
+    return ThemeData(
+      primaryColor: Colors.orange,
+      primarySwatch: Colors.orange,
+      brightness: Brightness.light,
+      scaffoldBackgroundColor: Colors.grey[50],
+      appBarTheme: AppBarTheme(
+        backgroundColor: Colors.orange,
+        foregroundColor: Colors.white,
+        elevation: 0,
+        iconTheme: const IconThemeData(color: Colors.white),
+      ),
+      listTileTheme: const ListTileThemeData(
+        iconColor: Colors.black87,
+      ),
+      iconTheme: const IconThemeData(color: Colors.black87),
+      textTheme: const TextTheme(
+        bodyLarge: TextStyle(color: Colors.black87),
+        bodyMedium: TextStyle(color: Colors.black87),
+        titleMedium: TextStyle(color: Colors.black87),
+        titleSmall: TextStyle(color: Colors.black54),
+      ),
+      colorScheme: ColorScheme.light(
+        primary: Colors.orange,
+        secondary: Colors.orangeAccent,
+        background: Colors.grey[50]!,
+        surface: Colors.white,
+      ),
+    );
   }
 
-  static Future<void> saveTheme(bool isDark) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setBool(_themeKey, isDark);
+  static ThemeData get darkTheme {
+    return ThemeData(
+      primaryColor: Colors.orange,
+      primarySwatch: Colors.orange,
+      brightness: Brightness.dark,
+      scaffoldBackgroundColor: Colors.grey[900],
+      appBarTheme: AppBarTheme(
+        backgroundColor: Colors.grey[800],
+        elevation: 0,
+        iconTheme: const IconThemeData(color: Colors.white),
+      ),
+      listTileTheme: ListTileThemeData(
+        iconColor: Colors.grey[300],
+      ),
+      iconTheme: const IconThemeData(color: Colors.white),
+      textTheme: const TextTheme(
+        bodyLarge: TextStyle(color: Colors.white),
+        bodyMedium: TextStyle(color: Colors.white),
+        titleMedium: TextStyle(color: Colors.white),
+        titleSmall: TextStyle(color: Colors.grey),
+      ),
+      colorScheme: ColorScheme.dark(
+        primary: Colors.orange,
+        secondary: Colors.orangeAccent,
+        background: Colors.grey[900]!,
+        surface: Colors.grey[800]!,
+      ),
+    );
   }
 }
