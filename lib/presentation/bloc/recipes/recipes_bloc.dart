@@ -1,0 +1,135 @@
+import 'package:bloc/bloc.dart';
+import 'package:equatable/equatable.dart';
+import 'package:recipes_app/domain/entities/recipe_entity.dart';
+import 'package:recipes_app/domain/repositories/recipe_repository.dart';
+
+part 'recipes_event.dart';
+part 'recipes_state.dart';
+
+class RecipesBloc extends Bloc<RecipesEvent, RecipesState> {
+  final RecipeRepository recipeRepository;
+
+  RecipesBloc({required this.recipeRepository}) : super(RecipesInitial()) {
+    on<LoadRecipes>(_onLoadRecipes);
+    on<RefreshRecipes>(_onRefreshRecipes);
+    on<FilterRecipes>(_onFilterRecipes);
+    on<LoadMoreRecipes>(_onLoadMoreRecipes);
+  }
+
+  List<RecipeEntity> _allRecipes = [];
+  List<RecipeEntity> _filteredRecipes = [];
+
+  Future<void> _onLoadRecipes(
+    LoadRecipes event,
+    Emitter<RecipesState> emit,
+  ) async {
+    emit(RecipesLoading());
+    
+    try {
+      final recipes = await recipeRepository.getRecipes();
+      _allRecipes = recipes;
+      _filteredRecipes = recipes;
+      
+      emit(RecipesLoaded(
+        recipes: _getPaginatedRecipes(0),
+        hasMore: recipes.length > 10,
+      ));
+    } catch (e) {
+      // При ошибке пробуем загрузить из кэша
+      try {
+        final cachedRecipes = await recipeRepository.getCachedRecipes();
+        if (cachedRecipes.isNotEmpty) {
+          _allRecipes = cachedRecipes;
+          _filteredRecipes = cachedRecipes;
+          emit(RecipesLoaded(
+            recipes: _getPaginatedRecipes(0),
+            hasMore: cachedRecipes.length > 10,
+            isOffline: true,
+          ));
+        } else {
+          emit(RecipesError(error: e.toString()));
+        }
+      } catch (_) {
+        emit(RecipesError(error: e.toString()));
+      }
+    }
+  }
+
+  Future<void> _onRefreshRecipes(
+    RefreshRecipes event,
+    Emitter<RecipesState> emit,
+  ) async {
+    try {
+      final recipes = await recipeRepository.getRecipes();
+      _allRecipes = recipes;
+      _filteredRecipes = recipes;
+      
+      emit(RecipesLoaded(
+        recipes: _getPaginatedRecipes(0),
+        hasMore: recipes.length > 10,
+      ));
+    } catch (e) {
+      emit(RecipesError(error: e.toString()));
+    }
+  }
+
+  void _onFilterRecipes(
+    FilterRecipes event,
+    Emitter<RecipesState> emit,
+  ) {
+    if (state is! RecipesLoaded) return;
+
+    _filteredRecipes = _allRecipes.where((recipe) {
+      // Поиск по названию и ингредиентам
+      final searchMatch = event.searchQuery.isEmpty ||
+          recipe.title?.toLowerCase().contains(event.searchQuery.toLowerCase()) == true ||
+          recipe.ingredientsOne?.any((ingredient) => 
+              ingredient.toLowerCase().contains(event.searchQuery.toLowerCase())) == true ||
+          recipe.ingredientsTwo?.any((ingredient) => 
+              ingredient.toLowerCase().contains(event.searchQuery.toLowerCase())) == true;
+
+      // Фильтр по наличию изображения
+      final imageFilterMatch = event.hasImage == null ||
+          (event.hasImage! ? recipe.image != null && recipe.image!.isNotEmpty : recipe.image == null || recipe.image!.isEmpty);
+
+      // Фильтр по времени приготовления
+      final timeFilterMatch = event.maxPrepTime == null ||
+          (recipe.prepTimeInMinutes != null && recipe.prepTimeInMinutes! <= event.maxPrepTime!);
+
+      return searchMatch && imageFilterMatch && timeFilterMatch;
+    }).toList();
+
+    emit(RecipesLoaded(
+      recipes: _getPaginatedRecipes(0),
+      hasMore: _filteredRecipes.length > 10,
+    ));
+  }
+
+  void _onLoadMoreRecipes(
+    LoadMoreRecipes event,
+    Emitter<RecipesState> emit,
+  ) {
+    if (state is! RecipesLoaded) return;
+
+    final currentState = state as RecipesLoaded;
+    final currentCount = currentState.recipes.length;
+    
+    if (currentCount >= _filteredRecipes.length) return;
+
+    final newRecipes = _getPaginatedRecipes(currentCount);
+    
+    emit(RecipesLoaded(
+      recipes: [...currentState.recipes, ...newRecipes],
+      hasMore: currentCount + newRecipes.length < _filteredRecipes.length,
+      isOffline: currentState.isOffline,
+    ));
+  }
+
+  List<RecipeEntity> _getPaginatedRecipes(int startIndex) {
+    final endIndex = startIndex + 10;
+    return _filteredRecipes.sublist(
+      startIndex,
+      endIndex > _filteredRecipes.length ? _filteredRecipes.length : endIndex,
+    );
+  }
+}
