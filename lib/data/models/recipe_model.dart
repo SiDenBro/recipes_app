@@ -1,14 +1,33 @@
+import 'package:json_annotation/json_annotation.dart';
+
+part 'recipe_model.g.dart';
+
+@JsonSerializable(
+  explicitToJson: true,
+  createToJson: true,
+  includeIfNull: false,
+)
 class RecipeModel {
   final String id;
   final String? title;
   final String? text;
   final String? image;
   final List<String>? steps;
+  
+  @JsonKey(name: 'prep_time')
   final String? prepTime;
+  
   final String? energy;
+  
+  @JsonKey(name: 'ingredients_one')
   final List<String>? ingredientsOne;
+  
+  @JsonKey(name: 'ingredients_two')
   final List<String>? ingredientsTwo;
+  
+  @JsonKey(name: 'date_added')
   final String? dateAdded;
+  
   final String? link;
 
   RecipeModel({
@@ -25,6 +44,7 @@ class RecipeModel {
     this.link,
   });
 
+  // Основной фабричный метод с кастомным парсингом
   factory RecipeModel.fromJson(Map<String, dynamic> json) {
     return RecipeModel(
       id: _parseString(json['id']),
@@ -41,21 +61,8 @@ class RecipeModel {
     );
   }
 
-  Map<String, dynamic> toJson() {
-    return {
-      'id': id,
-      'title': title,
-      'text': text,
-      'image': image,
-      'steps': steps,
-      'prep_time': prepTime,
-      'energy': energy,
-      'ingredients_one': ingredientsOne,
-      'ingredients_two': ingredientsTwo,
-      'date_added': dateAdded,
-      'link': link,
-    };
-  }
+  // Автоматически сгенерированный toJson
+  Map<String, dynamic> toJson() => _$RecipeModelToJson(this);
 
   // Вспомогательные методы для безопасного парсинга
   static String _parseString(dynamic value) {
@@ -132,5 +139,85 @@ class RecipeModel {
   @override
   String toString() {
     return 'RecipeModel(id: $id, title: $title)';
+  }
+
+  // Дополнительные удобные методы
+  
+  RecipeModel copyWith({
+    String? id,
+    String? title,
+    String? text,
+    String? image,
+    List<String>? steps,
+    String? prepTime,
+    String? energy,
+    List<String>? ingredientsOne,
+    List<String>? ingredientsTwo,
+    String? dateAdded,
+    String? link,
+  }) {
+    return RecipeModel(
+      id: id ?? this.id,
+      title: title ?? this.title,
+      text: text ?? this.text,
+      image: image ?? this.image,
+      steps: steps ?? this.steps,
+      prepTime: prepTime ?? this.prepTime,
+      energy: energy ?? this.energy,
+      ingredientsOne: ingredientsOne ?? this.ingredientsOne,
+      ingredientsTwo: ingredientsTwo ?? this.ingredientsTwo,
+      dateAdded: dateAdded ?? this.dateAdded,
+      link: link ?? this.link,
+    );
+  }
+
+  @override
+  bool operator ==(Object other) {
+    if (identical(this, other)) return true;
+    
+    return other is RecipeModel &&
+        other.id == id &&
+        other.title == title &&
+        other.text == text &&
+        other.image == image &&
+        _listEquals(other.steps, steps) &&
+        other.prepTime == prepTime &&
+        other.energy == energy &&
+        _listEquals(other.ingredientsOne, ingredientsOne) &&
+        _listEquals(other.ingredientsTwo, ingredientsTwo) &&
+        other.dateAdded == dateAdded &&
+        other.link == link;
+  }
+
+  @override
+  int get hashCode {
+    return Object.hash(
+      id,
+      title,
+      text,
+      image,
+      _listHash(steps),
+      prepTime,
+      energy,
+      _listHash(ingredientsOne),
+      _listHash(ingredientsTwo),
+      dateAdded,
+      link,
+    );
+  }
+
+  static bool _listEquals<T>(List<T>? a, List<T>? b) {
+    if (a == null) return b == null;
+    if (b == null) return false;
+    if (a.length != b.length) return false;
+    for (int i = 0; i < a.length; i++) {
+      if (a[i] != b[i]) return false;
+    }
+    return true;
+  }
+
+  static int _listHash<T>(List<T>? list) {
+    if (list == null) return 0;
+    return Object.hashAll(list);
   }
 }
