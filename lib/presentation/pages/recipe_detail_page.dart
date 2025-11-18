@@ -165,7 +165,7 @@ class RecipeDetailPage extends StatelessWidget {
       children: [
         if (recipe.prepTime != null) ...[
           _buildInfoItem(Icons.schedule, recipe.prepTime!),
-          const SizedBox(width: 16),
+          const SizedBox(height: 16),
         ],
         if (recipe.energy != null) 
           _buildInfoItem(Icons.local_fire_department, recipe.energy!),
@@ -175,6 +175,7 @@ class RecipeDetailPage extends StatelessWidget {
 
   Widget _buildInfoItem(IconData icon, String text) {
     return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Icon(icon, size: 20, color: Colors.grey),
         const SizedBox(width: 4),

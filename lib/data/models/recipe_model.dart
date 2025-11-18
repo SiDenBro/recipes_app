@@ -93,11 +93,16 @@ class RecipeModel {
       // Если energy - это список объектов, преобразуем в строку
       final energyList = value.map((item) {
         if (item is Map<String, dynamic>) {
-          return '${item['title']}: ${item['text']}';
+          return '${item['title']}: ${item['text']}\n';
         }
         return item.toString();
       }).toList();
-      return energyList.join(', ');
+      String text = energyList.join('');
+      text = text.replaceAll('Б', 'Белки');
+      text = text.replaceAll('Ж', 'Жиры');
+      text = text.replaceAll('У', 'Углеводы');
+      text = text.replaceAll('К', 'Каллории');
+      return text;
     }
     
     return value.toString();
