@@ -25,16 +25,44 @@ class RecipeRemoteDataSourceImpl implements RecipeRemoteDataSource {
       if (response.statusCode == 200) {
         final data = response.data;
         
+        // Обрабатываем разные форматы ответа
+        List<dynamic> recipesList;
+        
         if (data is String) {
+          // Если ответ пришел как строка, декодируем JSON
           final decoded = json.decode(data);
-          if (decoded is List) {
-            return decoded.map((item) => RecipeModel.fromJson(item)).toList();
+          if (decoded is Map<String, dynamic> && decoded.containsKey('news')) {
+            recipesList = decoded['news'];
+          } else if (decoded is List) {
+            recipesList = decoded;
+          } else {
+            throw FormatException('Invalid response format: expected object with "news" field or array');
+          }
+        } else if (data is Map<String, dynamic>) {
+          // Если ответ уже Map и содержит поле "news"
+          if (data.containsKey('news')) {
+            recipesList = data['news'];
+          } else {
+            throw FormatException('Response object does not contain "news" field');
           }
         } else if (data is List) {
-          return data.map((item) => RecipeModel.fromJson(item)).toList();
+          // Если ответ уже массив
+          recipesList = data;
+        } else {
+          throw FormatException('Unknown response format: ${data.runtimeType}');
         }
+
+        // Парсим список рецептов
+        return recipesList.map((item) {
+          try {
+            return RecipeModel.fromJson(item);
+          } catch (e) {
+            // Логируем ошибку парсинга отдельного элемента, но продолжаем обработку остальных
+            print('Error parsing recipe: $e');
+            return RecipeModel(id: 'error', title: 'Error parsing recipe');
+          }
+        }).where((recipe) => recipe.id != 'error').toList();
         
-        throw FormatException('Invalid response format');
       } else {
         throw Exception('Failed to load recipes: ${response.statusCode}');
       }
@@ -47,6 +75,8 @@ class RecipeRemoteDataSourceImpl implements RecipeRemoteDataSource {
       } else {
         throw Exception('Failed to load recipes: ${e.message}');
       }
+    } on FormatException catch (e) {
+      throw Exception('Invalid data format from server: ${e.message}');
     }
   }
 }

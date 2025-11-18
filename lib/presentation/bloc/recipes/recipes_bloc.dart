@@ -1,15 +1,26 @@
 import 'package:bloc/bloc.dart';
 import 'package:equatable/equatable.dart';
 import 'package:recipes_app/domain/entities/recipe_entity.dart';
-import 'package:recipes_app/domain/repositories/recipe_repository.dart';
+import 'package:recipes_app/domain/use_cases/cache_recipes_use_case.dart';
+import 'package:recipes_app/domain/use_cases/filter_recipes_use_case.dart';
+import 'package:recipes_app/domain/use_cases/get_cached_recipes_use_case.dart';
+import 'package:recipes_app/domain/use_cases/get_recipes_use_case.dart';
 
 part 'recipes_event.dart';
 part 'recipes_state.dart';
 
 class RecipesBloc extends Bloc<RecipesEvent, RecipesState> {
-  final RecipeRepository recipeRepository;
+  final GetRecipesUseCase getRecipesUseCase;
+  final GetCachedRecipesUseCase getCachedRecipesUseCase;
+  final CacheRecipesUseCase cacheRecipesUseCase;
+  final FilterRecipesUseCase filterRecipesUseCase;
 
-  RecipesBloc({required this.recipeRepository}) : super(RecipesInitial()) {
+  RecipesBloc({
+    required this.getRecipesUseCase,
+    required this.getCachedRecipesUseCase,
+    required this.cacheRecipesUseCase,
+    required this.filterRecipesUseCase,
+  }) : super(RecipesInitial()) {
     on<LoadRecipes>(_onLoadRecipes);
     on<RefreshRecipes>(_onRefreshRecipes);
     on<FilterRecipes>(_onFilterRecipes);
@@ -26,9 +37,12 @@ class RecipesBloc extends Bloc<RecipesEvent, RecipesState> {
     emit(RecipesLoading());
     
     try {
-      final recipes = await recipeRepository.getRecipes();
+      final recipes = await getRecipesUseCase();
       _allRecipes = recipes;
       _filteredRecipes = recipes;
+      
+      // Кэшируем рецепты
+      await cacheRecipesUseCase(recipes);
       
       emit(RecipesLoaded(
         recipes: _getPaginatedRecipes(0),
@@ -37,7 +51,7 @@ class RecipesBloc extends Bloc<RecipesEvent, RecipesState> {
     } catch (e) {
       // При ошибке пробуем загрузить из кэша
       try {
-        final cachedRecipes = await recipeRepository.getCachedRecipes();
+        final cachedRecipes = await getCachedRecipesUseCase();
         if (cachedRecipes.isNotEmpty) {
           _allRecipes = cachedRecipes;
           _filteredRecipes = cachedRecipes;
@@ -60,9 +74,11 @@ class RecipesBloc extends Bloc<RecipesEvent, RecipesState> {
     Emitter<RecipesState> emit,
   ) async {
     try {
-      final recipes = await recipeRepository.getRecipes();
+      final recipes = await getRecipesUseCase();
       _allRecipes = recipes;
       _filteredRecipes = recipes;
+      
+      await cacheRecipesUseCase(recipes);
       
       emit(RecipesLoaded(
         recipes: _getPaginatedRecipes(0),
@@ -79,29 +95,19 @@ class RecipesBloc extends Bloc<RecipesEvent, RecipesState> {
   ) {
     if (state is! RecipesLoaded) return;
 
-    _filteredRecipes = _allRecipes.where((recipe) {
-      // Поиск по названию и ингредиентам
-      final searchMatch = event.searchQuery.isEmpty ||
-          recipe.title?.toLowerCase().contains(event.searchQuery.toLowerCase()) == true ||
-          recipe.ingredientsOne?.any((ingredient) => 
-              ingredient.toLowerCase().contains(event.searchQuery.toLowerCase())) == true ||
-          recipe.ingredientsTwo?.any((ingredient) => 
-              ingredient.toLowerCase().contains(event.searchQuery.toLowerCase())) == true;
+    _filteredRecipes = filterRecipesUseCase(
+      allRecipes: _allRecipes,
+      searchQuery: event.searchQuery,
+      hasImage: event.hasImage,
+      maxPrepTime: event.maxPrepTime,
+    );
 
-      // Фильтр по наличию изображения
-      final imageFilterMatch = event.hasImage == null ||
-          (event.hasImage! ? recipe.image != null && recipe.image!.isNotEmpty : recipe.image == null || recipe.image!.isEmpty);
-
-      // Фильтр по времени приготовления
-      final timeFilterMatch = event.maxPrepTime == null ||
-          (recipe.prepTimeInMinutes != null && recipe.prepTimeInMinutes! <= event.maxPrepTime!);
-
-      return searchMatch && imageFilterMatch && timeFilterMatch;
-    }).toList();
-
+    final currentState = state as RecipesLoaded;
+    
     emit(RecipesLoaded(
       recipes: _getPaginatedRecipes(0),
       hasMore: _filteredRecipes.length > 10,
+      isOffline: currentState.isOffline,
     ));
   }
 

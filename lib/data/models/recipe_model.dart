@@ -25,24 +25,22 @@ class RecipeModel {
     this.link,
   });
 
-  // Простой фабричный метод для создания из JSON
   factory RecipeModel.fromJson(Map<String, dynamic> json) {
     return RecipeModel(
       id: _parseString(json['id']),
       title: _parseString(json['title']),
       text: _parseString(json['text']),
       image: _parseString(json['image']),
-      steps: _parseStringList(json['steps']),
+      steps: _parseComplexSteps(json['steps']),
       prepTime: _parseString(json['prep_time']),
-      energy: _parseString(json['energy']),
-      ingredientsOne: _parseStringList(json['ingredients_one']),
-      ingredientsTwo: _parseStringList(json['ingredients_two']),
+      energy: _parseEnergy(json['energy']),
+      ingredientsOne: _parseComplexIngredients(json['ingredients_one']),
+      ingredientsTwo: _parseComplexIngredients(json['ingredients_two']),
       dateAdded: _parseString(json['date_added']),
       link: _parseString(json['link']),
     );
   }
 
-  // Преобразование в JSON (для кэширования)
   Map<String, dynamic> toJson() {
     return {
       'id': id,
@@ -66,15 +64,66 @@ class RecipeModel {
     return value.toString();
   }
 
-  static List<String>? _parseStringList(dynamic value) {
+  // Парсинг сложной структуры steps
+  static List<String>? _parseComplexSteps(dynamic value) {
     if (value == null) return null;
+    
     if (value is List) {
-      return value.map((item) => _parseString(item)).toList();
+      return value.map((step) {
+        if (step is String) {
+          return step;
+        } else if (step is Map<String, dynamic>) {
+          // Извлекаем текст из объекта step
+          return _parseString(step['text']);
+        }
+        return '';
+      }).where((step) => step.isNotEmpty).toList();
     }
+    
     return null;
   }
 
-  // Для отладки
+  // Парсинг energy (может быть строкой или списком объектов)
+  static String? _parseEnergy(dynamic value) {
+    if (value == null) return null;
+    
+    if (value is String) {
+      return value;
+    } else if (value is List) {
+      // Если energy - это список объектов, преобразуем в строку
+      final energyList = value.map((item) {
+        if (item is Map<String, dynamic>) {
+          return '${item['title']}: ${item['text']}';
+        }
+        return item.toString();
+      }).toList();
+      return energyList.join(', ');
+    }
+    
+    return value.toString();
+  }
+
+  // Парсинг сложной структуры ingredients
+  static List<String>? _parseComplexIngredients(dynamic value) {
+    if (value == null) return null;
+    
+    if (value is List) {
+      return value.map((ingredient) {
+        if (ingredient is String) {
+          return ingredient;
+        } else if (ingredient is Map<String, dynamic>) {
+          // Извлекаем title и text из объекта ingredient
+          final title = _parseString(ingredient['title']);
+          final text = _parseString(ingredient['text']);
+          return '$title: $text';
+        }
+        return ingredient.toString();
+      }).where((ingredient) => ingredient.isNotEmpty).toList();
+    }
+    
+    return null;
+  }
+
   @override
   String toString() {
     return 'RecipeModel(id: $id, title: $title)';

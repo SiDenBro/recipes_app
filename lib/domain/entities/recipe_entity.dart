@@ -36,7 +36,13 @@ class RecipeEntity {
   int? get prepTimeInMinutes {
     if (prepTime == null) return null;
     try {
-      return int.tryParse(prepTime!);
+      // Пытаемся извлечь число из строки времени
+      final timeString = prepTime!.toLowerCase();
+      if (timeString.contains('мин')) {
+        final match = RegExp(r'(\d+)\s*мин').firstMatch(timeString);
+        if (match != null) return int.tryParse(match.group(1)!);
+      }
+      return int.tryParse(RegExp(r'\d+').firstMatch(prepTime!)?.group(0) ?? '');
     } catch (_) {
       return null;
     }
@@ -76,5 +82,15 @@ class RecipeEntity {
       dateAdded: dateAdded,
       link: link,
     );
+  }
+
+  // Для поиска
+  bool matchesSearch(String query) {
+    if (query.isEmpty) return true;
+    
+    final lowerQuery = query.toLowerCase();
+    return title?.toLowerCase().contains(lowerQuery) == true ||
+        ingredientsOne?.any((ingredient) => ingredient.toLowerCase().contains(lowerQuery)) == true ||
+        ingredientsTwo?.any((ingredient) => ingredient.toLowerCase().contains(lowerQuery)) == true;
   }
 }
