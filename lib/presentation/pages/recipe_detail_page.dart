@@ -17,30 +17,66 @@ class RecipeDetailPage extends StatelessWidget {
       ),
       body: BlocBuilder<RecipesBloc, RecipesState>(
         builder: (context, state) {
-          RecipeEntity? recipe;
-          
-          if (state is RecipesLoaded) {
-            recipe = state.recipes.firstWhere(
-              (r) => r.id == recipeId,
-              orElse: () => _findRecipeInAllRecipes(context),
-            );
-          }
-
-          if (recipe == null) {
-            return const Center(child: Text('Рецепт не найден'));
-          }
-
-          return _buildRecipeDetail(recipe);
+          return _buildContent(context, state);
         },
       ),
     );
   }
 
-  RecipeEntity _findRecipeInAllRecipes(BuildContext context) {
-    final bloc = context.read<RecipesBloc>();
-    // Здесь нужно получить доступ к полному списку рецептов из BLoC
-    // Для простоты пока возвращаем пустой рецепт
-    return RecipeEntity(id: recipeId);
+  Widget _buildContent(BuildContext context, RecipesState state) {
+    if (state is RecipesLoading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    if (state is RecipesError) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(Icons.error, size: 64, color: Colors.red),
+            const SizedBox(height: 16),
+            Text('Ошибка: ${state}'),
+            const SizedBox(height: 16),
+            ElevatedButton(
+              onPressed: () => _loadRecipes(context),
+              child: const Text('Повторить'),
+            ),
+          ],
+        ),
+      );
+    }
+
+    if (state is RecipesLoaded) {
+      final recipe = state.recipes.firstWhere(
+        (r) => r.id == recipeId,
+        orElse: () => RecipeEntity(id: ''), // Пустой рецепт если не найден
+      );
+
+      if (recipe.id.isEmpty) {
+        return const Center(child: Text('Рецепт не найден'));
+      }
+
+      return _buildRecipeDetail(recipe);
+    }
+
+    // Если состояние неизвестно или данные не загружены
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const Text('Данные не загружены'),
+          const SizedBox(height: 16),
+          ElevatedButton(
+            onPressed: () => _loadRecipes(context),
+            child: const Text('Загрузить рецепты'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _loadRecipes(BuildContext context) {
+    context.read<RecipesBloc>().add(LoadRecipes());
   }
 
   Widget _buildRecipeDetail(RecipeEntity recipe) {
@@ -82,6 +118,7 @@ class RecipeDetailPage extends StatelessWidget {
     );
   }
 
+  // Остальные методы (_buildImage, _buildInfoRow и т.д.) остаются без изменений
   Widget _buildImage(RecipeEntity recipe) {
     if (recipe.image == null || recipe.image!.isEmpty) {
       return Container(
