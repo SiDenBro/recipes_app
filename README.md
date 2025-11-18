@@ -1,16 +1,52 @@
-# recipes_app
+# Recipes App
 
-A new Flutter project.
+Flutter приложение для просмотра рецептов с поддержкой офлайн-режима.
 
-## Getting Started
+## Особенности
 
-This project is a starting point for a Flutter application.
+- 📱 Список рецептов с пагинацией
+- 🔍 Поиск и фильтрация
+- 📖 Детальная страница рецепта
+- 💾 Офлайн-режим с кэшированием
+- 🎨 Светлая/тёмная тема
+- 🔄 Pull-to-refresh
+- 🌐 Deep linking
 
-A few resources to get you started if this is your first Flutter project:
+## Зависимости
+Основные зависимости:
+- flutter_bloc - управление состоянием
+- dio - HTTP-клиент
+- cached_network_image - кэширование изображений
+- shared_preferences - локальное хранилище
+- go_router - навигация
+- freezed - генерация моделей
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
+## Особенности API
+API возвращает JSON с рецептами. Особенности:
+- Поля могут быть nullable
+- Структура может отличаться
+- Обработка ошибок и таймаутов
+- Повторные попытки при ошибках сети
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+## Что реализовано
+✅ Все основные требования ТЗ
+✅ BLoC для управления состоянием
+✅ Разделение на data/domain/presentation
+✅ Офлайн-режим с кэшированием
+✅ Поиск и фильтрация
+✅ Пагинация и pull-to-refresh
+✅ Обработка ошибок
+✅ Светлая/тёмная тема
+✅ Deep linking
+
+## Запуск проекта
+1. Убедитесь, что у вас установлен Flutter SDK
+2. Клонируйте репозиторий
+3. Выполните команды:
+
+```bash
+flutter pub get
+flutter pub run build_runner build
+flutter run
+
+

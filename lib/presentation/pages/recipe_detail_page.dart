@@ -39,7 +39,7 @@ class RecipeDetailPage extends StatelessWidget {
   RecipeEntity _findRecipeInAllRecipes(BuildContext context) {
     final bloc = context.read<RecipesBloc>();
     // Здесь нужно получить доступ к полному списку рецептов из BLoC
-    // Для простоты возвращаем пустой рецепт
+    // Для простоты пока возвращаем пустой рецепт
     return RecipeEntity(id: recipeId);
   }
 
